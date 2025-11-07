@@ -14,6 +14,8 @@ import mlbv.mlbam.common.stream as stream
 import mlbv.mlbam.common.util as util
 import mlbv.mlbam.mlbapidata as mlbapidata
 
+import json
+
 
 LOG = logging.getLogger(__name__)
 
@@ -237,6 +239,11 @@ def _lookup_inning_timestamp_via_milestones(
     milestones, inning, inning_half="top", overwrite_json=True
 ):
     stream_start = None
+
+    # # Open the file in write mode ('w') and use json.dump() to write the data
+    # with open('/Users/nchaturvedi/Desktop/milestones.json', 'w') as f:
+    #     json.dump(milestones, f, indent=4) # indent=4 for pretty-printing with 4 spaces
+
     for milestone in milestones:
         if milestone["milestoneType"] == "STREAM_START":
             milestone_inning = False
@@ -246,7 +253,10 @@ def _lookup_inning_timestamp_via_milestones(
             milestone_inning = "0"
             milestone_inning_half = "top"
             broadcast_start_str = str(milestone["absoluteTime"])
-            broadcast_start = parser.parse(stream_start_str).timestamp()
+            try:
+                broadcast_start = parser.parse(stream_start_str).timestamp()
+            except:
+                pass
         elif milestone["milestoneType"] == "INNING_START":
             milestone_inning = "1"
             milestone_inning_half = "top"
@@ -258,7 +268,9 @@ def _lookup_inning_timestamp_via_milestones(
                         milestone_inning_half = "bottom"
         else:
             continue
-            
+        
+        
+
         if milestone_inning == inning and milestone_inning_half == inning_half:
             # we found it
             inning_start_timestamp_str = milestone["absoluteTime"]
@@ -277,6 +289,7 @@ def _lookup_inning_timestamp_via_milestones(
 
     LOG.warning("Could not locate '%s %s' inning", inning_half, inning)
     return stream_start, None, None
+
 
 # def _lookup_inning_timestamp_via_airings(
 #     game_rec, media_playback_id, inning, inning_half="top", overwrite_json=True
